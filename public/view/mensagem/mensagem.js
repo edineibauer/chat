@@ -59,7 +59,7 @@ function sendWriting() {
 }
 
 async function readUser() {
-    usuario = await db.exeRead("usuarios", history.state.param.url[0]);
+    usuario = await read.exeRead("usuarios", history.state.param.url[0]);
     usuario.imagem = (!isEmpty(usuario.imagem) ? (usuario.imagem.constructor === Array && typeof usuario.imagem[0] !== "undefined" ? usuario.imagem[0].url : usuario.imagem) : HOME + "assetsPublic/img/img.png");
 }
 
@@ -144,12 +144,10 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
     /**
      * Retrieve messages chat data
      */
-    let read = new Read;
-    read.setFilter({"usuario": usuario.id});
-    let messageUser = await read.exeRead("messages_user");
-    if (!isEmpty(messageUser) && messageUser.constructor === Array) {
+    let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
+    if (!isEmpty(messageUser) && typeof messageUser === "object" && messageUser !== null) {
 
-        usuario.mensagens = messageUser[0];
+        usuario.mensagens = messageUser.constructor === Array ? messageUser[0] : messageUser ;
         usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
         updateDomInfo();
 
@@ -168,11 +166,13 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
         /**
          * Show messages on DOM
          */
-        let mensagens = await db.exeRead("messages", messageUser[0].mensagem);
-        $(".messages > ul").html("");
-        if (!isEmpty(mensagens)) {
-            for (m of mensagens.messages)
-                showMessage(m);
+        if(usuario.mensagens) {
+            let mensagens = await db.exeRead("messages", usuario.mensagens.mensagem);
+            $(".messages > ul").html("");
+            if (!isEmpty(mensagens)) {
+                for (m of mensagens.messages)
+                    showMessage(m);
+            }
         }
     }
 
