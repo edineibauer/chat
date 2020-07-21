@@ -1,0 +1,20 @@
+{
+    "name": "ueb/chat",
+    "description": "",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Edinei J. Bauer",
+            "email": "edineibauer@gmail.com"
+        }
+    ],
+    "require": {
+        "ueb/dashboard": "*",
+        "cboden/ratchet": "^0.4.3"
+    },
+    "autoload": {
+        "psr-0": {
+            "Chat": "public/src/"
+        }
+    }
+}
