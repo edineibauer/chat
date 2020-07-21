@@ -166,7 +166,7 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
         /**
          * Show messages on DOM
          */
-        if(usuario.mensagens) {
+        if(usuario.mensagens.mensagem) {
             let mensagens = await db.exeRead("messages", usuario.mensagens.mensagem);
             $(".messages > ul").html("");
             if (!isEmpty(mensagens)) {
