@@ -11,6 +11,23 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+#pendente {
+    height: 25px;
+    width: 25px;
+    padding: 3px 9px;
+    border-radius: 50px;
+    font-size: 13px;
+    background: #2d7aff;
+    color: white;
+    position: absolute;
+    top: 24px;
+    right: 10px;
+}
+
+.mensagens-card:hover {
+    color: inherit;
+}
+
 .imagem-perfil-mensagem {
     height: 40px;
     width: 40px;
