@@ -27,7 +27,6 @@ function _updatedChat() {
 
 function receiveMessage(mensagens) {
     if(typeof mensagens === "object" && mensagens !== null && mensagens.constructor === Array && !isEmpty(mensagens)) {
-        console.log(mensagens);
         for(let message of mensagens) {
             if ($.trim(message.mensagem).length) {
                 if (message.mensagem === "~^") {
@@ -35,7 +34,7 @@ function receiveMessage(mensagens) {
                 } else {
                     clearTimeout(writing);
                     showLastOnline();
-                    $('<li class="replies"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
+                    $('<li class="sent"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
                 }
             }
         }
@@ -55,7 +54,7 @@ function sendMessage(mensagem) {
     if ($.trim(mensagem).length) {
         AJAX.post("chatSendMessage", {usuario: usuario.id, mensagem: mensagem});
 
-        $('<li class="sent"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
+        $('<li class="replies"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
         $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
         $("#message-text").val('');
     }
@@ -64,6 +63,7 @@ function sendMessage(mensagem) {
 async function showAllMessages() {
     if(isNumberPositive(usuario.mensagens.mensagem)) {
         let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
+
         if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array) {
             let html = "";
             for (let message of mensagens.messages) {
@@ -177,7 +177,25 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
      * Retrieve messages chat data
      */
     let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
-    usuario.mensagens = (messageUser.constructor === Array ? messageUser[0] : messageUser);
+    if(!isEmpty(messageUser) && typeof messageUser === "object") {
+        if(messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
+            usuario.mensagens = messageUser[0];
+        else if(messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
+            usuario.mensagens = messageUser;
+    }
+
+    if(typeof usuario.mensagens === "undefined") {
+        usuario.mensagens = {
+            aceito: 0,
+            bloqueado: 0,
+            silenciado: 0,
+            mensagem: null,
+            status: moment().format("HH:mm"),
+            ultima_vez_online: "",
+            usuario: usuario.id
+        };
+    }
+
     usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
     updateDomInfo();
 
