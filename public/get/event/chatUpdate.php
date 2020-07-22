@@ -135,7 +135,7 @@ if (!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) &&
         }
 
         rmdir(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/" . $user);
-        addMessageToMysql($_SESSION['userlogin']['id'], $mensagens);
+        addMessageToMysql($user, $mensagens);
     }
 }
 

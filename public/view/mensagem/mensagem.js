@@ -62,15 +62,19 @@ function sendMessage(mensagem) {
 }
 
 async function showAllMessages() {
-    let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
-    if(typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array) {
-        let html = "";
-        for(let message of mensagens.messages) {
-            if ($.trim(message.mensagem).length && message.mensagem !== "~^")
-                html += '<li class="' + (message.usuario == USER.id ? "replies" :"sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+    if(isNumberPositive(usuario.mensagens.mensagem)) {
+        let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
+        if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array) {
+            let html = "";
+            for (let message of mensagens.messages) {
+                if ($.trim(message.mensagem).length && message.mensagem !== "~^")
+                    html += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+            }
+            $(".messages > ul").html(html);
+            $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
         }
-        $(".messages > ul").html(html);
-        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+    } else {
+        $(".messages > ul").html("");
     }
 }
 
@@ -173,17 +177,14 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
      * Retrieve messages chat data
      */
     let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
-    if (!isEmpty(messageUser) && ((messageUser.constructor === Array && isNumberPositive(messageUser[0].mensagem)) || isNumberPositive(messageUser.mensagem))) {
+    usuario.mensagens = (messageUser.constructor === Array ? messageUser[0] : messageUser);
+    usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
+    updateDomInfo();
 
-        usuario.mensagens = (messageUser.constructor === Array ? messageUser[0] : messageUser);
-        usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
-        updateDomInfo();
-
-        /**
-         * Read and show messages on DOM
-         */
-        await showAllMessages();
-    }
+    /**
+     * Read and show messages on DOM
+     */
+    await showAllMessages();
 
     /**
      * Input text click

@@ -1001,8 +1001,13 @@ body {
 }
 
 .modalPreviewFileText {
-    background: #2D7AFF!important;
-    color:#ffffff!important;
+    background: #2D7AFF;
+    color:#ffffff;
+}
+
+.sent .modalPreviewFileText {
+    background: #ffffff!important;
+    color:#555555!important;
 }
 
 #modalPreviewFile {
