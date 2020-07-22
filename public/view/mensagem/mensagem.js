@@ -1,4 +1,11 @@
-var writing = !1, usuario = {};
+var chatWriting = !1, usuarioChat = {}, updateChatInterval;
+
+function destruct() {
+    if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER)
+        updateChatInterval.close();
+    else
+        clearInterval(updateChatInterval);
+}
 
 /**
  * Function to update the chat conversation
@@ -7,15 +14,15 @@ var writing = !1, usuario = {};
 function _updatedChat() {
     if (navigator.onLine) {
         if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER) {
-            let u = new EventSource(SERVER + "get/event/chatUpdate/" + usuario.id + "/maestruToken/" + USER.token, {withCredentials: true});
-            u.onmessage = function (event) {
+            updateChatInterval = new EventSource(SERVER + "get/event/chatUpdate/" + usuarioChat.id + "/maestruToken/" + USER.token, {withCredentials: true});
+            updateChatInterval.onmessage = function (event) {
                 if (typeof event.data === "string" && event.data !== "" && isJson(event.data)) {
                     receiveMessage(JSON.parse(event.data));
                 }
             };
         } else {
-            setInterval(function () {
-                AJAX.getUrl(SERVER + "get/event/chatUpdate/" + usuario.id).then(u => {
+            updateChatInterval = setInterval(function () {
+                AJAX.getUrl(SERVER + "get/event/chatUpdate/" + usuarioChat.id).then(u => {
                     if (u.data !== "" && typeof u.data === "string" && isJson(u.data)) {
                         receiveMessage(JSON.parse(u.data));
                     }
@@ -26,13 +33,13 @@ function _updatedChat() {
 }
 
 function receiveMessage(mensagens) {
-    if(typeof mensagens === "object" && mensagens !== null && mensagens.constructor === Array && !isEmpty(mensagens)) {
-        for(let message of mensagens) {
+    if (typeof mensagens === "object" && mensagens !== null && mensagens.constructor === Array && !isEmpty(mensagens)) {
+        for (let message of mensagens) {
             if ($.trim(message.mensagem).length) {
                 if (message.mensagem === "~^") {
                     showWriting();
                 } else {
-                    clearTimeout(writing);
+                    clearTimeout(chatWriting);
                     showLastOnline();
                     $('<li class="sent"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
                 }
@@ -44,15 +51,15 @@ function receiveMessage(mensagens) {
 
 function showWriting() {
     $("#perfil-status").html("digitando...");
-    clearTimeout(writing);
-    writing = setTimeout(function () {
+    clearTimeout(chatWriting);
+    chatWriting = setTimeout(function () {
         showLastOnline();
     }, 1500);
 }
 
 function sendMessage(mensagem) {
     if ($.trim(mensagem).length) {
-        AJAX.post("chatSendMessage", {usuario: usuario.id, mensagem: mensagem});
+        AJAX.post("chatSendMessage", {usuario: usuarioChat.id, mensagem: mensagem});
 
         $('<li class="replies"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
         $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
@@ -71,70 +78,70 @@ async function showMessages(messages) {
 }
 
 async function showAllMessages() {
-    if(isNumberPositive(usuario.mensagens.mensagem)) {
-        let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
+    if (isNumberPositive(usuarioChat.mensagens.mensagem)) {
+        let mensagens = await read.exeRead("messages", usuarioChat.mensagens.mensagem);
         if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
             showMessages(mensagens.messages);
     }
 }
 
 async function readUser() {
-    usuario = await read.exeRead("usuarios", history.state.param.url[0]);
-    usuario.imagem = (!isEmpty(usuario.imagem) ? (usuario.imagem.constructor === Array && typeof usuario.imagem[0] !== "undefined" ? usuario.imagem[0].url : usuario.imagem) : HOME + "assetsPublic/img/img.png");
+    usuarioChat = await read.exeRead("usuarios", history.state.param.url[0]);
+    usuarioChat.imagem = (!isEmpty(usuarioChat.imagem) ? (usuarioChat.imagem.constructor === Array && typeof usuarioChat.imagem[0] !== "undefined" ? usuarioChat.imagem[0].url : usuarioChat.imagem) : HOME + "assetsPublic/img/img.png");
 
     /**
      * Retrieve messages chat data
      */
-    let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
-    if(!isEmpty(messageUser) && typeof messageUser === "object") {
-        if(messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
-            usuario.mensagens = messageUser[0];
-        else if(messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
-            usuario.mensagens = messageUser;
+    let messageUser = await read.exeRead("messages_user", {"usuario": usuarioChat.id});
+    if (!isEmpty(messageUser) && typeof messageUser === "object") {
+        if (messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
+            usuarioChat.mensagens = messageUser[0];
+        else if (messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
+            usuarioChat.mensagens = messageUser;
     }
 
     /**
      * If the chat dont exist yet, so search on files pending
      */
-    if(typeof usuario.mensagens === "undefined") {
-        let pending = await AJAX.get("event/chatPending/" + usuario.id);
-        if(!isEmpty(pending))
+    if (typeof usuarioChat.mensagens === "undefined") {
+        let pending = await AJAX.get("event/chatPending/" + usuarioChat.id);
+        if (!isEmpty(pending))
             showMessages(pending);
 
-        usuario.mensagens = {
+        usuarioChat.mensagens = {
             aceito: 0,
             bloqueado: 0,
             silenciado: 0,
             mensagem: null,
             status: moment().format("HH:mm"),
             ultima_vez_online: "",
-            usuario: usuario.id
+            usuario: usuarioChat.id
         };
     }
 
-    usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
+    usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online) : moment()).calendar();
     updateDomInfo();
 }
 
 function updateDomInfo() {
-    $("#mensagemHeader").htmlTemplate("mensagemHeader", usuario);
+    $("#mensagemHeader").htmlTemplate("mensagemHeader", usuarioChat);
     showLastOnline();
 
     /**
      * Check blocked status
      */
-    if (usuario.mensagens.bloqueado)
+    if (usuarioChat.mensagens.bloqueado)
         $("#bloquear > li").html("desbloquear");
 
     /**
      * Check silence status
      */
-    if (usuario.mensagens.silenciado)
+    if (usuarioChat.mensagens.silenciado)
         $("#silenciar > li").html("não silenciar");
 }
 
 function showLastOnline() {
-    $("#perfil-status").html((usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar());
+    $("#perfil-status").html((usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online) : moment()).calendar());
 }
 
 function closeModal() {
@@ -199,79 +206,81 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
     });
 }
 
-(async () => {
-    $(".messages > ul").html("");
-
-    /**
-     * Retrieve user info
-     * show user on DOM
-     */
-    await readUser();
-    let templates = await getTemplates();
-
-    /**
-     * Read and show messages on DOM
-     */
-    await showAllMessages();
-
-    $("#app").off("click", ".submit").on("click", ".submit", function () {
-        sendMessage($("#message-text").val());
-
-    }).off("keyup", "#message-text").on("keyup", "#message-text", function () {
-        if (event.keyCode === 13)
-            sendMessage($(this).val());
-        else
-            AJAX.get("chatIsWriting/" + usuario.id);
-
-    }).off("click", ".social-media").on("click", ".social-media", function () {
-        let $menu = $("#menu-chat");
-        if (!$menu.hasClass("active")) {
-            $menu.addClass("active");
-            $("body").off("mouseup").on("mouseup", function (e) {
-                if (!$menu.is(e.target) && $menu.has(e.target).length === 0) {
-                    setTimeout(function () {
-                        $menu.removeClass("active");
-                        $("body").off("mouseup");
-                    }, 50);
-                }
-            })
-        }
-
-    }).off("click", "#silenciar").on("click", "#silenciar", function () {
-        $("#silenciar > li").html(usuario.mensagens.silenciado ? "silenciar" : "não silenciar");
-        usuario.mensagens.silenciado = usuario.mensagens.silenciado == 1 ? 0 : 1;
-        showLastOnline();
-        $("#menu-chat").removeClass("active");
-        $("body").off("mouseup");
-        AJAX.post("chatSilenciar", {user: usuario.id, silenciado: usuario.mensagens.silenciado});
-
-    }).off("click", "#bloquear").on("click", "#bloquear", function () {
-        $("#bloquear > li").html((usuario.mensagens.bloqueado ? "" : "des") + "bloquear");
-        usuario.mensagens.bloqueado = usuario.mensagens.bloqueado == 1 ? 0 : 1;
-        showLastOnline();
-        $("#menu-chat").removeClass("active");
-        $("body").off("mouseup");
-        AJAX.post("chatBloquear", {user: usuario.id, bloqueado: usuario.mensagens.bloqueado});
-
-    }).off("click", ".modal-open").on("click", ".modal-open", function () {
-        _openPreviewFile($(this).data("url"), $(this).data("nome"), $(this).data("name"), $(this).data("type"), $(this).data("filetype"), $(this).find(".preview").html());
-
-    }).off("change", "#anexo").on("change", "#anexo", async function (e) {
+$(function () {
+    (async () => {
+        $(".messages > ul").html("");
 
         /**
-         * Send Anexo
+         * Retrieve user info
+         * show user on DOM
          */
-        if (typeof e.target.files[0] !== "undefined") {
-            let upload = await AJAX.uploadFile(e.target.files);
+        await readUser();
+        let templates = await getTemplates();
+
+        /**
+         * Read and show messages on DOM
+         */
+        await showAllMessages();
+
+        $("#app").off("click", ".submit").on("click", ".submit", function () {
+            sendMessage($("#message-text").val());
+
+        }).off("keyup", "#message-text").on("keyup", "#message-text", function () {
+            if (event.keyCode === 13)
+                sendMessage($(this).val());
+            else
+                AJAX.get("chatIsWriting/" + usuarioChat.id);
+
+        }).off("click", ".social-media").on("click", ".social-media", function () {
+            let $menu = $("#menu-chat");
+            if (!$menu.hasClass("active")) {
+                $menu.addClass("active");
+                $("body").off("mouseup").on("mouseup", function (e) {
+                    if (!$menu.is(e.target) && $menu.has(e.target).length === 0) {
+                        setTimeout(function () {
+                            $menu.removeClass("active");
+                            $("body").off("mouseup");
+                        }, 50);
+                    }
+                })
+            }
+
+        }).off("click", "#silenciar").on("click", "#silenciar", function () {
+            $("#silenciar > li").html(usuarioChat.mensagens.silenciado ? "silenciar" : "não silenciar");
+            usuarioChat.mensagens.silenciado = usuarioChat.mensagens.silenciado == 1 ? 0 : 1;
+            showLastOnline();
+            $("#menu-chat").removeClass("active");
+            $("body").off("mouseup");
+            AJAX.post("chatSilenciar", {user: usuarioChat.id, silenciado: usuarioChat.mensagens.silenciado});
+
+        }).off("click", "#bloquear").on("click", "#bloquear", function () {
+            $("#bloquear > li").html((usuarioChat.mensagens.bloqueado ? "" : "des") + "bloquear");
+            usuarioChat.mensagens.bloqueado = usuarioChat.mensagens.bloqueado == 1 ? 0 : 1;
+            showLastOnline();
+            $("#menu-chat").removeClass("active");
+            $("body").off("mouseup");
+            AJAX.post("chatBloquear", {user: usuarioChat.id, bloqueado: usuarioChat.mensagens.bloqueado});
+
+        }).off("click", ".modal-open").on("click", ".modal-open", function () {
+            _openPreviewFile($(this).data("url"), $(this).data("nome"), $(this).data("name"), $(this).data("type"), $(this).data("filetype"), $(this).find(".preview").html());
+
+        }).off("change", "#anexo").on("change", "#anexo", async function (e) {
 
             /**
-             * Send message anexo
+             * Send Anexo
              */
-            for (let file of upload)
-                sendMessage(Mustache.render(templates.anexoCard, file));
-        }
-    });
+            if (typeof e.target.files[0] !== "undefined") {
+                let upload = await AJAX.uploadFile(e.target.files);
 
-    _resizeControl();
-    _updatedChat();
-})();
+                /**
+                 * Send message anexo
+                 */
+                for (let file of upload)
+                    sendMessage(Mustache.render(templates.anexoCard, file));
+            }
+        });
+
+        _resizeControl();
+        _updatedChat();
+    })();
+});
