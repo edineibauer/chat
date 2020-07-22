@@ -117,7 +117,7 @@ async function readUser() {
             bloqueado: 0,
             silenciado: 0,
             mensagem: null,
-            status: moment().format("HH:mm"),
+            status: "nunca online",
             ultima_vez_online: "",
             usuario: usuarioChat.id
         };
@@ -145,7 +145,7 @@ function updateDomInfo() {
 }
 
 function showLastOnline() {
-    $("#perfil-status").html((usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online) : moment()).calendar());
+    $("#perfil-status").html((usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "nunca online"));
 }
 
 function closeModal() {
@@ -213,6 +213,7 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
 $(function () {
     (async () => {
         $(".messages > ul").html("");
+        AJAX.get("event/chatOnline/" + usuarioChat.id);
 
         /**
          * Retrieve user info
