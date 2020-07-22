@@ -123,7 +123,7 @@ async function readUser() {
         };
     }
 
-    usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online) : moment()).calendar();
+    usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "nunca online");
     updateDomInfo();
 }
 
