@@ -60,27 +60,60 @@ function sendMessage(mensagem) {
     }
 }
 
+async function showMessages(messages) {
+    let htmlMessage = "";
+    for (let message of messages) {
+        if ($.trim(message.mensagem).length && message.mensagem !== "~^")
+            htmlMessage += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+    }
+    $(".messages > ul").html(htmlMessage);
+    $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+}
+
 async function showAllMessages() {
     if(isNumberPositive(usuario.mensagens.mensagem)) {
         let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
-
-        if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array) {
-            let html = "";
-            for (let message of mensagens.messages) {
-                if ($.trim(message.mensagem).length && message.mensagem !== "~^")
-                    html += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
-            }
-            $(".messages > ul").html(html);
-            $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
-        }
-    } else {
-        $(".messages > ul").html("");
+        if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
+            showMessages(mensagens.messages);
     }
 }
 
 async function readUser() {
     usuario = await read.exeRead("usuarios", history.state.param.url[0]);
     usuario.imagem = (!isEmpty(usuario.imagem) ? (usuario.imagem.constructor === Array && typeof usuario.imagem[0] !== "undefined" ? usuario.imagem[0].url : usuario.imagem) : HOME + "assetsPublic/img/img.png");
+
+    /**
+     * Retrieve messages chat data
+     */
+    let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
+    if(!isEmpty(messageUser) && typeof messageUser === "object") {
+        if(messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
+            usuario.mensagens = messageUser[0];
+        else if(messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
+            usuario.mensagens = messageUser;
+    }
+
+    /**
+     * If the chat dont exist yet, so search on files pending
+     */
+    if(typeof usuario.mensagens === "undefined") {
+        let pending = await AJAX.get("event/chatPending/" + usuario.id);
+        if(!isEmpty(pending))
+            showMessages(pending);
+
+        usuario.mensagens = {
+            aceito: 0,
+            bloqueado: 0,
+            silenciado: 0,
+            mensagem: null,
+            status: moment().format("HH:mm"),
+            ultima_vez_online: "",
+            usuario: usuario.id
+        };
+    }
+
+    usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
+    updateDomInfo();
 }
 
 function updateDomInfo() {
@@ -167,61 +200,30 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
 }
 
 (async () => {
+    $(".messages > ul").html("");
+
     /**
      * Retrieve user info
      * show user on DOM
      */
     await readUser();
-
-    /**
-     * Retrieve messages chat data
-     */
-    let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
-    if(!isEmpty(messageUser) && typeof messageUser === "object") {
-        if(messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
-            usuario.mensagens = messageUser[0];
-        else if(messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
-            usuario.mensagens = messageUser;
-    }
-
-    if(typeof usuario.mensagens === "undefined") {
-        usuario.mensagens = {
-            aceito: 0,
-            bloqueado: 0,
-            silenciado: 0,
-            mensagem: null,
-            status: moment().format("HH:mm"),
-            ultima_vez_online: "",
-            usuario: usuario.id
-        };
-    }
-
-    usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
-    updateDomInfo();
+    let templates = await getTemplates();
 
     /**
      * Read and show messages on DOM
      */
     await showAllMessages();
 
-    /**
-     * Input text click
-     */
-    $("#message-text").off("keyup").on("keyup", function () {
+    $("#app").off("click", ".submit").on("click", ".submit", function () {
+        sendMessage($("#message-text").val());
+
+    }).off("keyup", "#message-text").on("keyup", "#message-text", function () {
         if (event.keyCode === 13)
             sendMessage($(this).val());
         else
             AJAX.get("chatIsWriting/" + usuario.id);
-    });
 
-    /**
-     * Buttons click
-     */
-    $('.submit').click(function () {
-        sendMessage($("#message-text").val());
-    });
-
-    $(".social-media").off("click").on("click", function () {
+    }).off("click", ".social-media").on("click", ".social-media", function () {
         let $menu = $("#menu-chat");
         if (!$menu.hasClass("active")) {
             $menu.addClass("active");
@@ -234,31 +236,31 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
                 }
             })
         }
-    });
 
-    $("#silenciar").off("click").on("click", function () {
+    }).off("click", "#silenciar").on("click", "#silenciar", function () {
         $("#silenciar > li").html(usuario.mensagens.silenciado ? "silenciar" : "não silenciar");
         usuario.mensagens.silenciado = usuario.mensagens.silenciado == 1 ? 0 : 1;
         showLastOnline();
         $("#menu-chat").removeClass("active");
         $("body").off("mouseup");
         AJAX.post("chatSilenciar", {user: usuario.id, silenciado: usuario.mensagens.silenciado});
-    });
 
-    $("#bloquear").off("click").on("click", function () {
+    }).off("click", "#bloquear").on("click", "#bloquear", function () {
         $("#bloquear > li").html((usuario.mensagens.bloqueado ? "" : "des") + "bloquear");
         usuario.mensagens.bloqueado = usuario.mensagens.bloqueado == 1 ? 0 : 1;
         showLastOnline();
         $("#menu-chat").removeClass("active");
         $("body").off("mouseup");
         AJAX.post("chatBloquear", {user: usuario.id, bloqueado: usuario.mensagens.bloqueado});
-    });
 
-    /**
-     * Send Anexo
-     */
-    let templates = await getTemplates();
-    $("#anexo").off("change").on("change", async function (e) {
+    }).off("click", ".modal-open").on("click", ".modal-open", function () {
+        _openPreviewFile($(this).data("url"), $(this).data("nome"), $(this).data("name"), $(this).data("type"), $(this).data("filetype"), $(this).find(".preview").html());
+
+    }).off("change", "#anexo").on("change", "#anexo", async function (e) {
+
+        /**
+         * Send Anexo
+         */
         if (typeof e.target.files[0] !== "undefined") {
             let upload = await AJAX.uploadFile(e.target.files);
 
@@ -268,13 +270,6 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
             for (let file of upload)
                 sendMessage(Mustache.render(templates.anexoCard, file));
         }
-    });
-
-    /**
-     * Função de click nos cards
-     */
-    $("#app").off("click", ".modal-open").on("click", ".modal-open", function () {
-        _openPreviewFile($(this).data("url"), $(this).data("nome"), $(this).data("name"), $(this).data("type"), $(this).data("filetype"), $(this).find(".preview").html());
     });
 
     _resizeControl();
