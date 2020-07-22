@@ -251,7 +251,7 @@ $(function () {
             showLastOnline();
             $("#menu-chat").removeClass("active");
             $("body").off("mouseup");
-            AJAX.post("chatSilenciar", {user: usuarioChat.id, silenciado: usuarioChat.mensagens.silenciado});
+            db.exeCreate("messages_user", {id: usuarioChat.mensagens.id, silenciado: usuarioChat.mensagens.silenciado});
 
         }).off("click", "#bloquear").on("click", "#bloquear", function () {
             $("#bloquear > li").html((usuarioChat.mensagens.bloqueado ? "" : "des") + "bloquear");
@@ -259,7 +259,7 @@ $(function () {
             showLastOnline();
             $("#menu-chat").removeClass("active");
             $("body").off("mouseup");
-            AJAX.post("chatBloquear", {user: usuarioChat.id, bloqueado: usuarioChat.mensagens.bloqueado});
+            db.exeCreate("messages_user", {id: usuarioChat.mensagens.id, bloqueado: usuarioChat.mensagens.bloqueado});
 
         }).off("click", ".modal-open").on("click", ".modal-open", function () {
             _openPreviewFile($(this).data("url"), $(this).data("nome"), $(this).data("name"), $(this).data("type"), $(this).data("filetype"), $(this).find(".preview").html());
