@@ -9,12 +9,6 @@
         }
     ],
     "require": {
-        "ueb/dashboard": "*",
-        "cboden/ratchet": "^0.4.3"
-    },
-    "autoload": {
-        "psr-0": {
-            "Chat": "public/src/"
-        }
+        "ueb/dashboard": "*"
     }
 }
