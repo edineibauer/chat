@@ -58,12 +58,16 @@ function showWriting() {
 }
 
 function sendMessage(mensagem) {
-    if ($.trim(mensagem).length) {
-        AJAX.post("chatSendMessage", {usuario: usuarioChat.id, mensagem: mensagem});
+    if (!usuarioChat.mensagens.bloqueado) {
+        if ($.trim(mensagem).length) {
+            AJAX.post("chatSendMessage", {usuario: usuarioChat.id, mensagem: mensagem});
 
-        $('<li class="replies"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
-        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
-        $("#message-text").val('');
+            $('<li class="replies"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
+            $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+            $("#message-text").val('');
+        }
+    } else {
+        toast("Usuário bloqueado", 1500, "toast-error");
     }
 }
 
@@ -269,14 +273,18 @@ $(function () {
             /**
              * Send Anexo
              */
-            if (typeof e.target.files[0] !== "undefined") {
-                let upload = await AJAX.uploadFile(e.target.files);
+            if (!usuarioChat.mensagens.bloqueado) {
+                if (typeof e.target.files[0] !== "undefined") {
+                    let upload = await AJAX.uploadFile(e.target.files);
 
-                /**
-                 * Send message anexo
-                 */
-                for (let file of upload)
-                    sendMessage(Mustache.render(templates.anexoCard, file));
+                    /**
+                     * Send message anexo
+                     */
+                    for (let file of upload)
+                        sendMessage(Mustache.render(templates.anexoCard, file));
+                }
+            } else {
+                toast("Usuário bloqueado", 1500, "toast-error");
             }
         });
 
