@@ -1,61 +1,77 @@
-if (typeof host === "undefined") {
-    var host = HOME.replace("https://", "").replace("http://", "").split("/")[0];
-    var socket = new WebSocket('ws://' + host + ':9999/mensagem/chat');
+var writing = !1, usuario = {};
 
-    // AJAX.get("serverMessage");
-    var writing = !1, usuario = {};
-
-    // Ao receber mensagens do servidor
-    socket.addEventListener('message', function (event) {
-        if (!usuario.mensagens.bloqueado)
-            showMessage(JSON.parse(event.data));
-    });
+/**
+ * Function to update the chat conversation
+ * @private
+ */
+function _updatedChat() {
+    if (navigator.onLine) {
+        if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER) {
+            let u = new EventSource(SERVER + "get/event/chatUpdate/" + usuario.id + "/maestruToken/" + USER.token, {withCredentials: true});
+            u.onmessage = function (event) {
+                if (typeof event.data === "string" && event.data !== "" && isJson(event.data)) {
+                    receiveMessage(JSON.parse(event.data));
+                }
+            };
+        } else {
+            setInterval(function () {
+                AJAX.getUrl(SERVER + "get/event/chatUpdate/" + usuario.id).then(u => {
+                    if (u.data !== "" && typeof u.data === "string" && isJson(u.data)) {
+                        receiveMessage(JSON.parse(u.data));
+                    }
+                });
+            }, 500);
+        }
+    }
 }
 
-function showMessage(mensagem) {
-    if ($.trim(mensagem.mensagem).length) {
-        if (mensagem.mensagem === "...writing...") {
-            if (mensagem.usuario != usuario.id)
-                showWriting();
-        } else {
-            clearTimeout(writing);
-            showLastOnline();
-            $('<li class="' + (mensagem.usuario == usuario.id ? "replies" : "sent") + '"><p>' + mensagem.mensagem + '<small>' + (!isEmpty(mensagem.data) ? moment(mensagem.data) : moment()).format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
-            $('.message-input input').val(null);
-            $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+function receiveMessage(mensagens) {
+    if(typeof mensagens === "object" && mensagens !== null && mensagens.constructor === Array && !isEmpty(mensagens)) {
+        console.log(mensagens);
+        for(let message of mensagens) {
+            if ($.trim(message.mensagem).length) {
+                if (message.mensagem === "~^") {
+                    showWriting();
+                } else {
+                    clearTimeout(writing);
+                    showLastOnline();
+                    $('<li class="replies"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
+                }
+            }
         }
+        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
     }
 }
 
 function showWriting() {
     $("#perfil-status").html("digitando...");
-
     clearTimeout(writing);
     writing = setTimeout(function () {
         showLastOnline();
     }, 1500);
 }
 
-function sendMessage() {
-    const data = {
-        usuario: usuario.id,
-        mensagem: $("#message-text").val(),
-        data: moment().format("YYYY-MM-DD HH:mm:ss")
-    };
+function sendMessage(mensagem) {
+    if ($.trim(mensagem).length) {
+        AJAX.post("chatSendMessage", {usuario: usuario.id, mensagem: mensagem});
 
-    socket.send(JSON.stringify(data));
-    AJAX.post("chatServerSendMessage", data);
-    $("#message-text").val('');
+        $('<li class="sent"><p>' + mensagem + '<small>' + moment().format("HH:mm") + '</small></p></li>').appendTo($('.messages ul'));
+        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+        $("#message-text").val('');
+    }
 }
 
-function sendWriting() {
-    const data = {
-        usuario: usuario.id,
-        mensagem: "...writing...",
-        data: moment().format("YYYY-MM-DD HH:mm:ss")
-    };
-
-    socket.send(JSON.stringify(data));
+async function showAllMessages() {
+    let mensagens = await read.exeRead("messages", usuario.mensagens.mensagem);
+    if(typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array) {
+        let html = "";
+        for(let message of mensagens.messages) {
+            if ($.trim(message.mensagem).length && message.mensagem !== "~^")
+                html += '<li class="' + (message.usuario == USER.id ? "replies" :"sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+        }
+        $(".messages > ul").html(html);
+        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
+    }
 }
 
 async function readUser() {
@@ -66,6 +82,18 @@ async function readUser() {
 function updateDomInfo() {
     $("#mensagemHeader").htmlTemplate("mensagemHeader", usuario);
     showLastOnline();
+
+    /**
+     * Check blocked status
+     */
+    if (usuario.mensagens.bloqueado)
+        $("#bloquear > li").html("desbloquear");
+
+    /**
+     * Check silence status
+     */
+    if (usuario.mensagens.silenciado)
+        $("#silenciar > li").html("não silenciar");
 }
 
 function showLastOnline() {
@@ -145,35 +173,16 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
      * Retrieve messages chat data
      */
     let messageUser = await read.exeRead("messages_user", {"usuario": usuario.id});
-    if (!isEmpty(messageUser) && typeof messageUser === "object" && messageUser !== null) {
+    if (!isEmpty(messageUser) && ((messageUser.constructor === Array && isNumberPositive(messageUser[0].mensagem)) || isNumberPositive(messageUser.mensagem))) {
 
-        usuario.mensagens = messageUser.constructor === Array ? messageUser[0] : messageUser ;
+        usuario.mensagens = (messageUser.constructor === Array ? messageUser[0] : messageUser);
         usuario.mensagens.status = (usuario.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuario.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + (!isEmpty(usuario.mensagens.ultima_vez_online) ? moment(usuario.mensagens.ultima_vez_online) : moment()).calendar();
         updateDomInfo();
 
         /**
-         * Check blocked status
+         * Read and show messages on DOM
          */
-        if (usuario.mensagens.bloqueado)
-            $("#bloquear > li").html("desbloquear");
-
-        /**
-         * Check silence status
-         */
-        if (usuario.mensagens.silenciado)
-            $("#silenciar > li").html("não silenciar");
-
-        /**
-         * Show messages on DOM
-         */
-        if(usuario.mensagens.mensagem) {
-            let mensagens = await db.exeRead("messages", usuario.mensagens.mensagem);
-            $(".messages > ul").html("");
-            if (!isEmpty(mensagens)) {
-                for (m of mensagens.messages)
-                    showMessage(m);
-            }
-        }
+        await showAllMessages();
     }
 
     /**
@@ -181,16 +190,16 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
      */
     $("#message-text").off("keyup").on("keyup", function () {
         if (event.keyCode === 13)
-            sendMessage();
+            sendMessage($(this).val());
         else
-            sendWriting();
+            AJAX.get("chatIsWriting/" + usuario.id);
     });
 
     /**
      * Buttons click
      */
     $('.submit').click(function () {
-        sendMessage();
+        sendMessage($("#message-text").val());
     });
 
     $(".social-media").off("click").on("click", function () {
@@ -234,20 +243,11 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
         if (typeof e.target.files[0] !== "undefined") {
             let upload = await AJAX.uploadFile(e.target.files);
 
-            for (let file of upload) {
-                /**
-                 * Send message anexo
-                 * @type {{data: *, mensagem: *, usuario: *}}
-                 */
-                const data = {
-                    usuario: usuario.id,
-                    mensagem: Mustache.render(templates.anexoCard, file),
-                    data: moment().format("YYYY-MM-DD HH:mm:ss")
-                };
-
-                socket.send(JSON.stringify(data));
-                await AJAX.post("chatServerSendMessage", data);
-            }
+            /**
+             * Send message anexo
+             */
+            for (let file of upload)
+                sendMessage(Mustache.render(templates.anexoCard, file));
         }
     });
 
@@ -259,4 +259,5 @@ function _openPreviewFile(url, nome, name, type, fileType, preview) {
     });
 
     _resizeControl();
+    _updatedChat();
 })();

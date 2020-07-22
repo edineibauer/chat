@@ -19,7 +19,7 @@ if($read->getResult()) {
     $note = new \Dashboard\Notification();
     $note->setUsuarios($mensagem['usuario']);
     $note->setTitulo($_SESSION['userlogin']['nome']);
-    $note->setDescricao($mensagem['messages']);
+    $note->setDescricao($mensagem['mensagem']);
     $note->setImagem(!empty($_SESSION['userlogin']['imagem']) ? $_SESSION['userlogin']['imagem'][0]['urls']['thumb'] : HOME . "assetsPublic/img/favicon.png");
     $note->setUrl(HOME . "mensagem/" . $_SESSION['userlogin']['id']);
     $note->enviar();
