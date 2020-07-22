@@ -68,13 +68,15 @@ function sendMessage(mensagem) {
 }
 
 async function showMessages(messages) {
-    let htmlMessage = "";
-    for (let message of messages) {
-        if ($.trim(message.mensagem).length && message.mensagem !== "~^")
-            htmlMessage += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+    if(!isEmpty(messages)) {
+        let htmlMessage = "";
+        for (let message of messages) {
+            if ($.trim(message.mensagem).length && message.mensagem !== "~^")
+                htmlMessage += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
+        }
+        $(".messages > ul").html(htmlMessage);
+        $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
     }
-    $(".messages > ul").html(htmlMessage);
-    $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
 }
 
 async function showAllMessages() {
@@ -83,6 +85,11 @@ async function showAllMessages() {
         if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
             showMessages(mensagens.messages);
     }
+
+    /**
+     * Search on files pending
+     */
+    showMessages(await AJAX.get("event/chatPending/" + usuarioChat.id));
 }
 
 async function readUser() {
@@ -100,14 +107,7 @@ async function readUser() {
             usuarioChat.mensagens = messageUser;
     }
 
-    /**
-     * If the chat dont exist yet, so search on files pending
-     */
     if (typeof usuarioChat.mensagens === "undefined") {
-        let pending = await AJAX.get("event/chatPending/" + usuarioChat.id);
-        if (!isEmpty(pending))
-            showMessages(pending);
-
         usuarioChat.mensagens = {
             aceito: 0,
             bloqueado: 0,
