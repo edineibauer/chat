@@ -63,6 +63,23 @@ function addMessageToMysql(int $user, array $mensagens)
              * Create message data dialog
              */
             $messages = [];
+
+            /**
+             * Search for messages on the other user
+             */
+            if (file_exists(PATH_HOME . "_cdn/chat/{$user}/pending/" . $_SESSION['userlogin']['id'])) {
+                foreach (\Helpers\Helper::listFolder(PATH_HOME . "_cdn/chat/{$user}/pending/" . $_SESSION['userlogin']['id']) as $item) {
+                    $m = json_decode(file_get_contents(PATH_HOME . "_cdn/chat/{$user}/pending/{$_SESSION['userlogin']['id']}/{$item}"), !0);
+                    $m["data"] = date("Y-m-d H:i:s", $m['data']);
+                    $messages[] = $m;
+                    unlink(PATH_HOME . "_cdn/chat/{$user}/pending/{$_SESSION['userlogin']['id']}/{$item}");
+                }
+                rmdir(PATH_HOME . "_cdn/chat/{$user}/pending/" . $_SESSION['userlogin']['id']);
+            }
+
+            /**
+             * add messages received by param
+             */
             foreach ($mensagens as $msg) {
                 $messages[] = [
                     "mensagem" => $msg['mensagem'],
@@ -70,7 +87,9 @@ function addMessageToMysql(int $user, array $mensagens)
                     "data" => date("Y-m-d H:i:s", $msg['data'])
                 ];
             }
+
             $create->exeCreate("messages", ['messages' => json_encode($messages)]);
+
             if ($create->getResult()) {
                 $messageId = $create->getResult();
 
