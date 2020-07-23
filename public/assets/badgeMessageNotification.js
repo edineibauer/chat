@@ -20,7 +20,7 @@ async function messageBadgeNotification() {
             if(messageBadgeNote)
                 messageBadgeNote.close();
 
-            messageBadgeNote = new EventSource(SERVER + "get/event/sse/chatBadgeNotification", {withCredentials: true});
+            messageBadgeNote = new EventSource(SERVER + "get/event/sse/chatBadgeNotification/maestruToken/" + USER.token, {withCredentials: true});
 
             messageBadgeNote.onmessage = function (event) {
                 _messageBadgeShow(event.data);
