@@ -10,7 +10,7 @@ header('Cache-Control: no-cache');
 function sendMsg(string $msg, $id = null)
 {
     echo "id: " . ($id ?? time()) . PHP_EOL;
-    echo "retry: 3000" . PHP_EOL;
+    echo "retry: 2000" . PHP_EOL;
     echo "data: $msg" . PHP_EOL;
     echo PHP_EOL;
     ob_flush();

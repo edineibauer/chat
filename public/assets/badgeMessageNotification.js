@@ -31,7 +31,7 @@ async function messageBadgeNotification() {
 
             messageBadgeNote = setInterval(async function () {
                 _messageBadgeShow(await AJAX.get("event/chatBadgeNotification"));
-            }, 3000);
+            }, 2000);
         }
     }
 }
