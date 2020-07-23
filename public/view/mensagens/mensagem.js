@@ -1,8 +1,9 @@
 async function readPeopleMessages() {
     let messages = await read.exeRead("messages_user");
     let pending = await AJAX.get("event/chatAllPending");
+    let isEmptyMessages = isEmpty(messages);
 
-    if (!isEmpty(messages)) {
+    if (!isEmptyMessages) {
         for(let message of messages) {
             message.ultima_vez_online = await AJAX.get("event/chatOnline/" + message.usuario);
             message.ultima_vez_online = (!isEmpty(message.ultima_vez_online) ? moment(message.ultima_vez_online).calendar() : "nunca online");
@@ -20,19 +21,19 @@ async function readPeopleMessages() {
             }
         }
         $("#list-message").htmlTemplate("cardMessages", messages);
-
-        if(!isEmpty(pending))
-            setPendingMessages(pending);
-
-    } else {
-        $("#list-message").htmlTemplate("notificacoesEmpty", {mensagem: "Nenhuma mensagem no momento"});
     }
+
+    if(!isEmpty(pending))
+        setPendingMessages(pending, isEmptyMessages);
+    else if(isEmptyMessages)
+        $("#list-message").htmlTemplate("notificacoesEmpty", {mensagem: "Nenhuma mensagem no momento"});
 }
 
-async function setPendingMessages(messages) {
+async function setPendingMessages(messages, isEmptyMessages) {
     if (!isEmpty(messages)) {
         let templates = await getTemplates();
-        if(!$("#list-message").find(".mensagens-card").length)
+
+        if(isEmptyMessages)
             $("#list-message").html("");
 
         for(let userId in messages) {

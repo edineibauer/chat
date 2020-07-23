@@ -82,6 +82,7 @@ body {
 .message-card-name {
     height: 18px;
     overflow: hidden;
+    margin-top: -2px;
 }
 
 #frame {
