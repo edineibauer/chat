@@ -14,7 +14,7 @@ function destruct() {
 function _updatedChat() {
     if (navigator.onLine) {
         if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER) {
-            updateChatInterval = new EventSource(SERVER + "get/event/chatUpdate/" + usuarioChat.id + "/maestruToken/" + USER.token, {withCredentials: true});
+            updateChatInterval = new EventSource(SERVER + "get/event/sse/chatUpdate/" + usuarioChat.id + "/maestruToken/" + USER.token, {withCredentials: true});
             updateChatInterval.onmessage = function (event) {
                 if (typeof event.data === "string" && event.data !== "" && isJson(event.data)) {
                     receiveMessage(JSON.parse(event.data));
@@ -23,8 +23,8 @@ function _updatedChat() {
         } else {
             updateChatInterval = setInterval(function () {
                 AJAX.getUrl(SERVER + "get/event/chatUpdate/" + usuarioChat.id).then(u => {
-                    if (u.data !== "" && typeof u.data === "string" && isJson(u.data)) {
-                        receiveMessage(JSON.parse(u.data));
+                    if (typeof u.data === "object") {
+                        receiveMessage(u.data);
                     }
                 });
             }, 500);

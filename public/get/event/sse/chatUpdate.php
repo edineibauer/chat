@@ -1,8 +1,25 @@
 <?php
+header('Content-Type: text/event-stream');
+header('Cache-Control: no-cache');
 
 use Conn\Create;
 use Conn\Read;
 use Conn\Update;
+
+/**
+ * Send message to front
+ * @param string $msg
+ * @param null $id
+ */
+function sendMsg(string $msg, $id = null)
+{
+    echo "id: " . ($id ?? time()) . PHP_EOL;
+    echo "retry: 500" . PHP_EOL;
+    echo "data: $msg" . PHP_EOL;
+    echo PHP_EOL;
+    ob_flush();
+    flush();
+}
 
 /**
  * Send the message to database
@@ -122,4 +139,4 @@ if (!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) &&
     }
 }
 
-$data['data'] = $mensagens;
+sendMsg(json_encode($mensagens));

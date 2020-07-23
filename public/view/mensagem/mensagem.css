@@ -11,6 +11,10 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+input:focus~label {
+    color: #212529;
+}
+
 #menu-chat {
     border-radius: 3px;
     background: #ffffff;
