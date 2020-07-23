@@ -22,5 +22,5 @@ function sendMsg(string $msg, $id = null)
  */
 if (file_exists(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending"))
     sendMsg(count(\Helpers\Helper::listFolder(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending")));
-
-sendMsg(0);
+else
+    sendMsg(0);
