@@ -85,7 +85,7 @@ async function showMessages(messages) {
 
 async function showAllMessages() {
     if (isNumberPositive(usuarioChat.mensagens.mensagem)) {
-        let mensagens = await read.exeRead("messages", usuarioChat.mensagens.mensagem);
+        let mensagens = await exeRead("messages", usuarioChat.mensagens.mensagem);
         if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
             showMessages(mensagens.messages);
     }
@@ -97,13 +97,13 @@ async function showAllMessages() {
 }
 
 async function readUser() {
-    usuarioChat = await read.exeRead("usuarios", history.state.param.url[0]);
+    usuarioChat = await exeRead("usuarios", history.state.param.url[0]);
     usuarioChat.imagem = (!isEmpty(usuarioChat.imagem) ? (usuarioChat.imagem.constructor === Array && typeof usuarioChat.imagem[0] !== "undefined" ? usuarioChat.imagem[0].url : usuarioChat.imagem) : HOME + "assetsPublic/img/img.png");
 
     /**
      * Retrieve messages chat data
      */
-    let messageUser = await read.exeRead("messages_user", {"usuario": usuarioChat.id});
+    let messageUser = await exeRead("messages_user", {"usuario": usuarioChat.id});
     if (!isEmpty(messageUser) && typeof messageUser === "object") {
         if (messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
             usuarioChat.mensagens = messageUser[0];

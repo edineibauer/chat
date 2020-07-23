@@ -1,5 +1,5 @@
 async function readPeopleMessages() {
-    let messages = await read.exeRead("messages_user");
+    let messages = await exeRead("messages_user");
     let pending = await AJAX.get("event/chatAllPending");
     let isEmptyMessages = isEmpty(messages);
 
@@ -16,7 +16,7 @@ async function readPeopleMessages() {
             } else {
                 message.pendente = 0;
                 message.isPendente = !1;
-                message.usuario = await read.exeRead("usuarios", message.usuario);
+                message.usuario = await exeRead("usuarios", message.usuario);
                 message.usuario.imagem = (!isEmpty(message.usuario.imagem) ? (message.usuario.imagem.constructor === Array && typeof message.usuario.imagem[0] !== "undefined" ? message.usuario.imagem[0].url : message.usuario.imagem ) : HOME + "assetsPublic/img/img.png");
             }
         }
