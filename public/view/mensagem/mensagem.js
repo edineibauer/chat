@@ -14,6 +14,7 @@ function destruct() {
 function _updatedChat() {
     if (navigator.onLine) {
         if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER) {
+            updateChatInterval.close();
             updateChatInterval = new EventSource(SERVER + "get/event/sse/chatUpdate/" + usuarioChat.id + "/maestruToken/" + USER.token, {withCredentials: true});
             updateChatInterval.onmessage = function (event) {
                 if (typeof event.data === "string" && event.data !== "" && isJson(event.data)) {
@@ -21,6 +22,7 @@ function _updatedChat() {
                 }
             };
         } else {
+            clearInterval(updateChatInterval);
             updateChatInterval = setInterval(function () {
                 AJAX.getUrl(SERVER + "get/event/chatUpdate/" + usuarioChat.id).then(u => {
                     if (typeof u.data === "object") {
