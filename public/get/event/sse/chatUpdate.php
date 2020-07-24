@@ -129,21 +129,28 @@ if (!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) &&
      * Search for writing status
      */
     if (file_exists(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt")) {
-        $mensagens[] = ["mensagem" => "~^", "usuario" => $user, "data" => file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt")];
+        $dia = file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt");
+        if ($dia < strtotime() - 10)
+            $mensagens[] = ["mensagem" => "~^", "usuario" => $user, "data" => $dia];
+
         unlink(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt");
     }
 
     /**
      * Search for pending messages to send to user
      */
+    $mensagensSend = [];
     if (file_exists(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/" . $user)) {
         foreach (\Helpers\Helper::listFolder(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/" . $user) as $item) {
-            $mensagens[] = json_decode(file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/{$user}/{$item}"), !0);
+            $mensagensSend[] = json_decode(file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/{$user}/{$item}"), !0);
             unlink(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/{$user}/{$item}");
         }
 
         rmdir(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/pending/" . $user);
-        addMessageToMysql($user, $mensagens);
+        addMessageToMysql($user, $mensagensSend);
+
+        foreach ($mensagensSend as $item)
+            $mensagens[] = $item;
     }
 }
 

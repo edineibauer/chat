@@ -1,4 +1,4 @@
-var chatWriting = !1, usuarioChat = {}, updateChatInterval;
+var chatWriting = !1, chatIsWriting, usuarioChat = {}, updateChatInterval;
 
 function destruct() {
     if (typeof (EventSource) !== "undefined" && HOME !== "" && HOME === SERVER)
@@ -232,10 +232,14 @@ $(function () {
             sendMessage($("#message-text").val());
 
         }).off("keyup", "#message-text").on("keyup", "#message-text", function () {
-            if (event.keyCode === 13)
+            if (event.keyCode === 13) {
                 sendMessage($(this).val());
-            else
-                AJAX.get("chatIsWriting/" + usuarioChat.id);
+            }else {
+                clearTimeout(chatIsWriting);
+                chatIsWriting = setTimeout(function () {
+                    AJAX.get("chatIsWriting/" + usuarioChat.id);
+                }, 400);
+            }
 
         }).off("click", ".social-media").on("click", ".social-media", function () {
             let $menu = $("#menu-chat");
