@@ -97,7 +97,11 @@ function addMessageToMysql(int $user, array $mensagens)
                 $create->exeCreate("messages_user", [
                     "usuario" => $user,
                     "ownerpub" => $_SESSION['userlogin']['id'],
-                    "mensagem" => $messageId
+                    "mensagem" => $messageId,
+                    "aceito" => 0,
+                    "bloqueado" => 0,
+                    "silenciado" => 0,
+                    "ultima_vez_online" => date("Y-m-d H:i:s")
                 ]);
 
                 /**
@@ -106,7 +110,11 @@ function addMessageToMysql(int $user, array $mensagens)
                 $create->exeCreate("messages_user", [
                     "usuario" => $_SESSION['userlogin']['id'],
                     "ownerpub" => $user,
-                    "mensagem" => $messageId
+                    "mensagem" => $messageId,
+                    "aceito" => 0,
+                    "bloqueado" => 0,
+                    "silenciado" => 0,
+                    "ultima_vez_online" => date("Y-m-d H:i:s")
                 ]);
             }
         }

@@ -15,30 +15,28 @@ if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && 
      * this store say to user that have pending messages
      */
     $read->exeRead("messages_user", "WHERE ownerpub = :user AND usuario = :me", "user={$user}&me={$_SESSION['userlogin']['id']}", !0);
-    if($read->getResult()) {
-        $m = $read->getResult()[0];
+    $m = ($read->getResult() ? $read->getResult()[0] : ["silenciado" => 0, 'bloqueado' => 0]);
 
-        if($m['bloqueado'] == 0) {
-            $f = fopen(PATH_HOME . "_cdn/chat/" . $user . "/pending/" . $_SESSION['userlogin']['id'] . "/" . strtotime('now') . "-" . rand(99999, 999999) . ".txt", "w+");
-            fwrite($f, json_encode(["mensagem" => $mensagem, "usuario" => $_SESSION['userlogin']['id'], "data" => strtotime('now')]));
-            fclose($f);
-        }
+    if($m['bloqueado'] == 0) {
+        $f = fopen(PATH_HOME . "_cdn/chat/" . $user . "/pending/" . $_SESSION['userlogin']['id'] . "/" . strtotime('now') . "-" . rand(99999, 999999) . ".txt", "w+");
+        fwrite($f, json_encode(["mensagem" => $mensagem, "usuario" => $_SESSION['userlogin']['id'], "data" => strtotime('now')]));
+        fclose($f);
+    }
+
+    /**
+     * Check if the user accept Notification
+     */
+    if($m['silenciado'] == 0) {
 
         /**
-         * Check if the user accept Notification
+         * Notify user from new message incoming from this user
          */
-        if($m['silenciado'] == 0) {
-
-            /**
-             * Notify user from new message incoming from this user
-             */
-            $note = new \Dashboard\Notification();
-            $note->setUsuarios($user);
-            $note->setTitulo($_SESSION['userlogin']['nome']);
-            $note->setDescricao($mensagem);
-            $note->setImagem(!empty($_SESSION['userlogin']['imagem']) ? $_SESSION['userlogin']['imagem'][0]['url'] : HOME . "assetsPublic/img/favicon.png");
-            $note->setUrl(HOME . "mensagem/" . $_SESSION['userlogin']['id']);
-            $note->enviar();
-        }
+        $note = new \Dashboard\Notification();
+        $note->setUsuarios($user);
+        $note->setTitulo($_SESSION['userlogin']['nome']);
+        $note->setDescricao($mensagem);
+        $note->setImagem(!empty($_SESSION['userlogin']['imagem']) ? $_SESSION['userlogin']['imagem'][0]['url'] : HOME . "assetsPublic/img/favicon.png");
+        $note->setUrl(HOME . "mensagem/" . $_SESSION['userlogin']['id']);
+        $note->enviar();
     }
 }

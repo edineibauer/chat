@@ -1,5 +1,5 @@
 {{#.}}
-    <a href="{{home}}mensagem/{{usuario.id}}" class="col mb-2 pb-2 mensagens-card">
+    <a href="{{home}}mensagem/{{usuario.id}}" class="col mb-1 pb-2 mensagens-card">
         <div class="float-left imagem-perfil-mensagem" style="background-image: url('{{usuario.imagem}}')"></div>
         <div class="float-left message-card-body">
             <h6 class="float-left col mb-0">
@@ -13,9 +13,9 @@
                 </small>
             </h6>
             <div class="col float-left message-card-message">
-                {{lastMessage}}
+                {{{lastMessage}}}
             </div>
         </div>
-        {{#isPendente}}<div id="pendente" class="float-left theme" style="padding-top: 2px">{{pendente}}</div>{{/isPendente}}
+        {{#pendente}}<div id="pendente" class="float-left theme" style="padding-top: 2px">{{pendente}}</div>{{/pendente}}
     </a>
 {{/.}}
