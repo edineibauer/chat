@@ -78,7 +78,7 @@ async function showMessages(messages) {
             if ($.trim(message.mensagem).length && message.mensagem !== "~^")
                 htmlMessage += '<li class="' + (message.usuario == USER.id ? "replies" : "sent") + '"><p>' + message.mensagem + '<small>' + moment(message.data).format("HH:mm") + '</small></p></li>';
         }
-        $(".messages > ul").html(htmlMessage);
+        $(".messages > ul").append(htmlMessage);
         $(".messages")[0].scrollTop = $(".messages")[0].scrollHeight;
     }
 }
