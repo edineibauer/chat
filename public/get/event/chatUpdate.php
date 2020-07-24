@@ -131,8 +131,8 @@ if (!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) &&
      * Search for writing status
      */
     if (file_exists(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt")) {
-        $dia = file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt");
-        if ($dia < strtotime('now') - 10)
+        $dia = (int) file_get_contents(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt");
+        if ($dia + 10 > strtotime('now'))
             $mensagens[] = ["mensagem" => "~^", "usuario" => $user, "data" => $dia];
 
         unlink(PATH_HOME . "_cdn/chat/{$_SESSION['userlogin']['id']}/{$user}.txt");
