@@ -1,10 +1,14 @@
 <?php
 
+use Conn\Read;
+use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
+
 $user = filter_input(INPUT_POST, 'usuario', FILTER_VALIDATE_INT);
 $mensagem = trim(filter_input(INPUT_POST, 'mensagem', FILTER_DEFAULT));
 
 if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && !empty($user)) {
-    $read = new \Conn\Read();
+    $read = new Read();
     \Helpers\Helper::createFolderIfNoExist(PATH_HOME . "_cdn/chat");
     \Helpers\Helper::createFolderIfNoExist(PATH_HOME . "_cdn/chat/" . $user);
     \Helpers\Helper::createFolderIfNoExist(PATH_HOME . "_cdn/chat/" . $user . "/pending");
@@ -26,17 +30,36 @@ if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && 
     /**
      * Check if the user accept Notification
      */
-    if($m['silenciado'] == 0) {
+    if($m['silenciado'] == 0 && defined("PUSH_PUBLIC_KEY") && !empty(PUSH_PUBLIC_KEY) && defined("PUSH_PRIVATE_KEY") && !empty(PUSH_PRIVATE_KEY)) {
 
-        /**
-         * Notify user from new message incoming from this user
-         */
-        $note = new \Dashboard\Notification();
-        $note->setUsuarios($user);
-        $note->setTitulo($_SESSION['userlogin']['nome']);
-        $note->setDescricao($mensagem);
-        $note->setImagem(!empty($_SESSION['userlogin']['imagem']) ? $_SESSION['userlogin']['imagem'][0]['url'] : HOME . "assetsPublic/img/favicon.png");
-        $note->setUrl(HOME . "mensagem/" . $_SESSION['userlogin']['id']);
-        $note->enviar();
+        $read->exeRead("push_notifications", "WHERE usuario = :u", "u={$user}");
+        if($read->getResult()) {
+
+            $webPush = new WebPush([
+                'VAPID' => [
+                    'subject' => HOME,
+                    'publicKey' => PUSH_PUBLIC_KEY, // don't forget that your public key also lives in app.js
+                    'privateKey' => PUSH_PRIVATE_KEY, // in the real world, this would be in a secret file
+                ]
+            ]);
+
+            $webPush->sendNotification(
+                Subscription::create(json_decode($read->getResult()[0]['subscription'], !0)),
+                json_encode(
+                    [
+                        "id" => time(),
+                        "title" => $_SESSION['userlogin']['nome'],
+                        "body" => $mensagem,
+                        "badge" => HOME . "assetsPublic/img/favicon.png?v=" . VERSION,
+                        "data" => HOME . "mensagem/" . $_SESSION['userlogin']['id'],
+                        "icon" => !empty($_SESSION['userlogin']['imagem']) ? $_SESSION['userlogin']['imagem'][0]['url'] : HOME . "assetsPublic/img/favicon.png",
+                        "imagem" => ""
+                    ]
+                )
+            );
+
+            foreach ($webPush->flush() as $report)
+                $endpoint = $report->getRequest()->getUri()->__toString();
+        }
     }
 }
