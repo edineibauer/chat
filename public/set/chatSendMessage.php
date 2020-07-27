@@ -36,7 +36,7 @@ if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && 
 
             if(!$isSendNotification) {
                 $day = json_decode(file_get_contents(PATH_HOME . "_cdn/userActivity/" . $_SESSION['userlogin']['id'] . "/{$dia}.json"), !0);
-                $isSendNotification = (strtotime($dia . ' ' . $day[count($day) - 1]) > strtotime('now') - 5);
+                $isSendNotification = (strtotime($dia . ' ' . $day[count($day) - 1]) < strtotime('now') - 5);
             }
 
             if($isSendNotification) {
