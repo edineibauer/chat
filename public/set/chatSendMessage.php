@@ -22,8 +22,7 @@ if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && 
     $m = ($read->getResult() ? $read->getResult()[0] : ["silenciado" => 0, 'bloqueado' => 0]);
 
     if($m['bloqueado'] == 0) {
-        $pathMessage = PATH_HOME . "_cdn/chat/" . $user . "/pending/" . $_SESSION['userlogin']['id'] . "/" . strtotime('now') . "-" . rand(99999, 999999) . ".txt";
-        $f = fopen($pathMessage, "w+");
+        $f = fopen(PATH_HOME . "_cdn/chat/" . $user . "/pending/" . $_SESSION['userlogin']['id'] . "/" . strtotime('now') . "-" . rand(99999, 999999) . ".txt", "w+");
         fwrite($f, json_encode(["mensagem" => $mensagem, "usuario" => $_SESSION['userlogin']['id'], "data" => strtotime('now')]));
         fclose($f);
 
@@ -32,9 +31,15 @@ if(!empty($_SESSION['userlogin']) && !empty($_SESSION['userlogin']['token']) && 
          */
         if($m['silenciado'] == 0 && defined("PUSH_PUBLIC_KEY") && !empty(PUSH_PUBLIC_KEY) && defined("PUSH_PRIVATE_KEY") && !empty(PUSH_PRIVATE_KEY)) {
 
-            sleep(10);
+            $dia = date("Y-m-d");
+            $isSendNotification = !file_exists(PATH_HOME . "_cdn/userActivity/" . $_SESSION['userlogin']['id'] . "/{$dia}.json");
 
-            if(file_exists($pathMessage)) {
+            if(!$isSendNotification) {
+                $day = json_decode(file_get_contents(PATH_HOME . "_cdn/userActivity/" . $_SESSION['userlogin']['id'] . "/{$dia}.json"), !0);
+                $isSendNotification = (strtotime($dia . ' ' . $day[count($day) - 1]) > strtotime('now') - 5);
+            }
+
+            if($isSendNotification) {
                 $read->exeRead("push_notifications", "WHERE usuario = :u", "u={$user}");
                 if ($read->getResult()) {
 
