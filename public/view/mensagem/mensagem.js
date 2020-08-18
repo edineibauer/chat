@@ -94,8 +94,11 @@ async function showMessages(messages) {
 async function showAllMessages() {
     if (isNumberPositive(usuarioChat.mensagens.mensagem)) {
         let mensagens = await db.exeRead("messages", usuarioChat.mensagens.mensagem);
-        if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
-            showMessages(mensagens.messages);
+        if(!isEmpty(mensagens)) {
+            mensagens = mensagens[0];
+            if (typeof mensagens.messages === "object" && mensagens.messages !== null && mensagens.messages.constructor === Array)
+                showMessages(mensagens.messages);
+        }
     }
 
     /**
@@ -106,35 +109,34 @@ async function showAllMessages() {
 
 async function readUser() {
     usuarioChat = await db.exeRead("usuarios", history.state.param.url[0]);
-    usuarioChat.imagem = (!isEmpty(usuarioChat.imagem) ? (usuarioChat.imagem.constructor === Array && typeof usuarioChat.imagem[0] !== "undefined" ? usuarioChat.imagem[0].url : usuarioChat.imagem) : HOME + "assetsPublic/img/img.png");
+    if(!isEmpty(usuarioChat)) {
+        usuarioChat = usuarioChat[0];
+        usuarioChat.imagem = (!isEmpty(usuarioChat.imagem) ? (usuarioChat.imagem.constructor === Array && typeof usuarioChat.imagem[0] !== "undefined" ? usuarioChat.imagem[0].url : usuarioChat.imagem) : HOME + "assetsPublic/img/img.png");
 
-    /**
-     * Retrieve messages chat data
-     */
-    let messageUser = await db.exeRead("messages_user", {"usuario": usuarioChat.id});
-    if (!isEmpty(messageUser) && typeof messageUser === "object") {
-        if (messageUser.constructor === Array && isNumberPositive(messageUser[0]['mensagem']))
+        /**
+         * Retrieve messages chat data
+         */
+        let messageUser = await db.exeRead("messages_user", {"usuario": usuarioChat.id});
+        if (!isEmpty(messageUser) && isNumberPositive(messageUser[0]['mensagem']))
             usuarioChat.mensagens = messageUser[0];
-        else if (messageUser.constructor === Object && isNumberPositive(messageUser.mensagem))
-            usuarioChat.mensagens = messageUser;
-    }
 
-    if (typeof usuarioChat.mensagens === "undefined") {
-        usuarioChat.mensagens = {
-            aceito: 0,
-            bloqueado: 0,
-            silenciado: 0,
-            mensagem: null,
-            status: "nunca online",
-            ultima_vez_online: "",
-            usuario: usuarioChat.id
-        };
-    }
+        if (typeof usuarioChat.mensagens === "undefined") {
+            usuarioChat.mensagens = {
+                aceito: 0,
+                bloqueado: 0,
+                silenciado: 0,
+                mensagem: null,
+                status: "nunca online",
+                ultima_vez_online: "",
+                usuario: usuarioChat.id
+            };
+        }
 
-    usuarioChat.mensagens.ultima_vez_online = await AJAX.get("event/chatOnline/" + usuarioChat.id);
-    usuarioChat.mensagens.ultima_vez_online = (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "nunca online");
-    usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + usuarioChat.mensagens.ultima_vez_online;
-    updateDomInfo();
+        usuarioChat.mensagens.ultima_vez_online = await AJAX.get("event/chatOnline/" + usuarioChat.id);
+        usuarioChat.mensagens.ultima_vez_online = (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "nunca online");
+        usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + usuarioChat.mensagens.ultima_vez_online;
+        updateDomInfo();
+    }
 }
 
 function updateDomInfo() {
