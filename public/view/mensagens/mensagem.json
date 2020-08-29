@@ -5,5 +5,5 @@
   "navbar": true,
   "header": false,
   "redirect": "login",
-  "templates": ["notificacoesEmpty"]
+  "templates": ["empty"]
 }
