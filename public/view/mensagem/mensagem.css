@@ -56,6 +56,9 @@ input:focus~label {
 #perfil-name {
     width: 60%!important;
     margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #444444;
 }
 
 #perfil-status {

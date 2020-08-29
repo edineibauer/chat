@@ -87,6 +87,7 @@ body {
 
 #frame {
     width: 100%;
+    max-width: 100vw;
     height: calc(100vh - 50px);
     min-height: 300px;
     background: #F1F0F5;

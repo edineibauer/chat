@@ -1,18 +1,6 @@
-async function readPeopleMessages() {
-    let messages = await AJAX.get("event/chatAllmessagesUser");
+async function momentdata(data) {
+    for(let d of data)
+        d.ultima_vez_online = moment(d.ultima_vez_online).calendar();
 
-    if (!isEmpty(messages)) {
-        for(let message of messages)
-            message.ultima_vez_online = (!isEmpty(message.ultima_vez_online) ? moment((isNumberPositive(message.ultima_vez_online) ? parseInt(message.ultima_vez_online + "000") : message.ultima_vez_online)).calendar() : "nunca online");
-
-        $("#list-message").htmlTemplate("cardMessages", messages);
-    } else {
-        $("#list-message").htmlTemplate("notificacoesEmpty", {mensagem: "Nenhuma mensagem no momento"});
-    }
+    return data;
 }
-
-$(function () {
-    (async () => {
-        await readPeopleMessages();
-    })();
-});

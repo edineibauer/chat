@@ -1,0 +1,46 @@
+<div id="frame">
+    <div class="content">
+        <section class="nomessage">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12">
+                        <div>
+                            <h3 class="titulo" style="font-weight: 700">Mensagens</h3>
+                        </div>
+                        <div id="list-message" data-realtime-get="momentdata" data-get="event/chatAllmessagesUser"
+                             data-template-empty="empty" data-param-empty='{text: "Nenhum contato feito até então"}'>
+                            {{#.}}
+                                <a href="{{home}}mensagem/{{usuario.id}}" class="col mb-1 pb-2 mensagens-card">
+                                    <div class="float-left imagem-perfil-mensagem"
+                                         style="background-image: url('{{usuario.imagem}}')"></div>
+                                    <div class="float-left message-card-body">
+                                        <h6 class="float-left col mb-0">
+                                            <div class="col p-0 float-left message-card-name">
+                                                {{usuario.nome}}
+                                            </div>
+                                            <small class="col pl-0 pb-1 float-left message-card-date">
+                                                {{#bloqueado}}<i class='material-icons blocked'>block</i>{{/bloqueado}}
+                                                {{#silenciado}}<i class='material-icons' style="padding-top: 1px">volume_off</i>{{/silenciado}}
+                                                <div data-realtime-html="momentdata" class="lastonline float-left" style="padding-top: 2px">
+                                                    {{ultima_vez_online}}
+                                                </div>
+                                            </small>
+                                        </h6>
+                                        <div class="col float-left message-card-message">
+                                            {{{lastMessage}}}
+                                        </div>
+                                    </div>
+                                    {{#pendente}}
+                                        <div id="pendente" class="float-left theme" style="padding-top: 2px">
+                                            {{pendente}}
+                                        </div>
+                                    {{/pendente}}
+                                </a>
+                            {{/.}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>

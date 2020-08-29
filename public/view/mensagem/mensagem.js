@@ -108,10 +108,25 @@ async function showAllMessages() {
 }
 
 async function readUser() {
-    usuarioChat = await db.exeRead("usuarios", history.state.param.url[0]);
+    usuarioChat = await db.exeRead("usuarios", URL[0]);
+
     if(!isEmpty(usuarioChat)) {
         usuarioChat = usuarioChat[0];
-        usuarioChat.imagem = (!isEmpty(usuarioChat.imagem) ? (usuarioChat.imagem.constructor === Array && typeof usuarioChat.imagem[0] !== "undefined" ? usuarioChat.imagem[0].url : usuarioChat.imagem) : HOME + "assetsPublic/img/img.png");
+
+        console.log(usuarioChat);
+
+        /**
+         * This user chat is a profissional too
+         */
+        if(!isEmpty(usuarioChat.relationData.clientes.perfil_profissional)) {
+            usuarioChat.nome = usuarioChat.relationData.clientes.perfil_profissional[0].nome;
+            usuarioChat.imagem = usuarioChat.relationData.clientes.perfil_profissional[0].imagem_de_perfil[0].urls.thumb;
+        } else {
+            /**
+             * Just cliente, check if have social image or so perfil image
+             */
+            usuarioChat.imagem = (!isEmpty(usuarioChat.relationData.clientes.imagem_url) ? usuarioChat.relationData.clientes.imagem_url : (!isEmpty(usuarioChat.imagem) ? usuarioChat.imagem[0].urls.thumb : HOME + "assetsPublic/img/img.png"));
+        }
 
         /**
          * Retrieve messages chat data
@@ -126,14 +141,14 @@ async function readUser() {
                 bloqueado: 0,
                 silenciado: 0,
                 mensagem: null,
-                status: "nunca online",
+                status: "não respondeu",
                 ultima_vez_online: "",
                 usuario: usuarioChat.id
             };
         }
 
         usuarioChat.mensagens.ultima_vez_online = await AJAX.get("event/chatOnline/" + usuarioChat.id);
-        usuarioChat.mensagens.ultima_vez_online = (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "nunca online");
+        usuarioChat.mensagens.ultima_vez_online = (!isEmpty(usuarioChat.mensagens.ultima_vez_online) ? moment(usuarioChat.mensagens.ultima_vez_online).calendar() : "não respondeu");
         usuarioChat.mensagens.status = (usuarioChat.mensagens.bloqueado ? "<i class='material-icons blocked'>block</i>" : "") + (usuarioChat.mensagens.silenciado ? "<i class='material-icons'>volume_off</i>" : "") + usuarioChat.mensagens.ultima_vez_online;
         updateDomInfo();
     }
